@@ -186,6 +186,7 @@ def GetMsUserInfo(request):
     client_id = os.environ.get('MICROSOFT_CLIENT_ID')
     client_secret = os.environ.get('MICROSOFT_CLIENT_SECRET')
     redirect_uri = f"{os.environ.get('FRONTEND_BASE_URL')}/{os.environ.get('MICROSOFT_REDIRECT_URI')}"
+    print('the redirect uri is', redirect_uri)
     
     token_url = "https://login.microsoftonline.com/common/oauth2/v2.0/token"
     token_data = {
