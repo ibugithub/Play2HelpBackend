@@ -14,6 +14,7 @@ class SubmitScoreView(APIView):
 
     def post(self, request):
         serializer = ScoreSerializer(data=request.data)
+        print('the request.data is', request.data)
         game = request.data.get('game')
         score = request.data.get('score')
         reward = request.data.get('reward')
@@ -58,8 +59,6 @@ class ListAllScores(generics.ListAPIView):
 
     def get_queryset(self):
         game = self.request.query_params.get('game')
-        print('the game is', game)
-        print('the request.query_params is', self.request.query_params)
         if game:
             return Score.objects.filter(game=game)
         return Score.objects.all()

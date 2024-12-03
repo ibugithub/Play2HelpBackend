@@ -6,7 +6,7 @@ User = get_user_model()
 
 class Score(models.Model):
   user = models.ForeignKey(User, on_delete=models.CASCADE)
-  game = models.CharField(max_length=100, unique=True)
+  game = models.CharField(max_length=100)
   score = models.IntegerField()
   reward = models.FloatField(default=0.0)
   created_at = models.DateTimeField(auto_now_add=True)
