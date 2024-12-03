@@ -19,7 +19,7 @@ class SubmitScoreView(APIView):
         score = request.data.get('score')
         reward = request.data.get('reward')
 
-        if not game or score < 0:
+        if not game or int(score) < 0:
             return Response({'error': 'Game and score are required fields.'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
