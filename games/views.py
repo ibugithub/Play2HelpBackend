@@ -44,5 +44,8 @@ class SubmitScoreView(APIView):
 class ScoreListView(generics.ListAPIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
-    queryset = Score.objects.all()
     serializer_class = ScoreSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        return Score.objects.filter(user=user)
