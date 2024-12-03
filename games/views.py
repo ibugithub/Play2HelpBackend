@@ -16,6 +16,7 @@ class SubmitScoreView(APIView):
         serializer = ScoreSerializer(data=request.data)
         game = request.data.get('game')
         score = request.data.get('score')
+        reward = request.data.get('reward')
 
         if not game or not score:
             return Response({'error': 'Game and score are required fields.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -32,6 +33,7 @@ class SubmitScoreView(APIView):
 
         if existing_score:
             existing_score.score += score
+            existing_score.reward += reward
             existing_score.save()
             return Response({'message': 'Score updated successfully'}, status=status.HTTP_200_OK)
         else:
@@ -49,3 +51,15 @@ class ScoreListView(generics.ListAPIView):
     def get_queryset(self):
         user = self.request.user
         return Score.objects.filter(user=user)
+
+
+class ListAllScores(generics.ListAPIView):
+    serializer_class = ScoreSerializer
+
+    def get_queryset(self):
+        game = self.request.query_params.get('game')
+        print('the game is', game)
+        print('the request.query_params is', self.request.query_params)
+        if game:
+            return Score.objects.filter(game=game)
+        return Score.objects.all()
