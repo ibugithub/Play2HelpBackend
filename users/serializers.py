@@ -14,7 +14,10 @@ class UserSerializer(serializers.ModelSerializer):
     
     def validate_email(self, value):
       if User.objects.filter(email=value).exists():
-          raise serializers.ValidationError("Email already exists")
+        raise serializers.ValidationError("Email already exists")
+      email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+      if not re.match(email_regex, value):
+        raise serializers.ValidationError('Enter a valid email address.')
       return value
 
     def validate(self, data):

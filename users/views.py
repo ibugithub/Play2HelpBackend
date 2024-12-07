@@ -82,6 +82,7 @@ def handleThrdProvUser(request, user):
     except User.DoesNotExist:
       password = generate_random_password()
       user = User.objects.create_user(email=email, name=name, password=password)
+      user.is_verified = True
     refresh = RefreshToken.for_user(user)
     accessToken =  str(refresh.access_token)
     refreshToken = str(refresh)
