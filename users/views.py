@@ -12,14 +12,23 @@ from rest_framework import status
 import os
 import random
 import string
+from users.utils.sendEmail import send_email;
+
 
 class CreateUser(APIView):
   def post(self, request):
     serializer = UserSerializer(data=request.data)
     if serializer.is_valid():
       serializer.save()
+      user = serializer.instance
+      verification_token = RefreshToken.for_user(user).access_token
+      verification_url = f"{os.environ.get('FRONTEND_BASE_URL')}/accounts/verifyEmail?token={verification_token}"
+      send_email(
+        subject="Verify your email",
+        recipient_list=[user.email],
+        message=f"Please verify your email by clicking on the following link: {verification_url}"
+      )
       return Response(serializer.data, status=status.HTTP_201_CREATED)
-    
     # Extract the first error message
     errors = serializer.errors
     first_error = None
@@ -27,6 +36,7 @@ class CreateUser(APIView):
       first_error = error_list[0]
       break
     return Response({"error": first_error}, status=status.HTTP_400_BAD_REQUEST)
+
   
 class SignInView(APIView):
   def post(self, request):
@@ -49,7 +59,6 @@ class ListUserView(generics.ListAPIView):
   queryset = User.objects.all()
   serializer_class = ListUserSerializer
   permission_classes = [permissions.IsAuthenticated]
-  
 
 class ValidateTokenView(APIView):
   def post(self, request):
@@ -142,7 +151,6 @@ def GetGoogleUserInfo(request):
     return handleThrdProvUser(request._request, user)
   except requests.RequestException as e:
     return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 
 @api_view(['POST'])
@@ -251,9 +259,23 @@ def GetMsUserInfo(request):
     )
         
         
+   
         
-        
-        
-        
-        
-        
+@api_view(['POST'])
+def verifyEmail(request):
+  token = request.headers.get('Authorization')
+  if not token or not token.startswith('Bearer '):
+    return Response({"error": "Invalid token header"}, status=status.HTTP_400_BAD_REQUEST)
+  
+  token = token.split(' ')[1]
+  try:
+    refresh_token = RefreshToken(token)
+    user = User.objects.get(id=refresh_token['user_id'])
+    user.is_verified = True
+    user.save()
+    return Response({"message": "Email verified successfully"}, status=status.HTTP_200_OK)
+  except Exception as e:
+    return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+  
+  
+  

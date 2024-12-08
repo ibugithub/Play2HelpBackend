@@ -62,13 +62,11 @@ class SignInSerializer(serializers.Serializer):
     data['user'] = user
     return data
   
-  
 class ListUserSerializer(serializers.ModelSerializer):
   class Meta:
     model = User
     fields = ['id', 'email', 'name', 'is_active', 'is_admin']
     
-
 class AccessTokenSerializer(serializers.Serializer):
   token = serializers.CharField()
 
