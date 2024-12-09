@@ -2,7 +2,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .serializers import UserSerializer, SignInSerializer, ListUserSerializer, AccessTokenSerializer, ThirdPartyUserSerializer
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 from rest_framework import generics, permissions
 from .models import User
 import requests
@@ -37,12 +37,13 @@ class CreateUser(APIView):
       break
     return Response({"error": first_error}, status=status.HTTP_400_BAD_REQUEST)
 
-  
 class SignInView(APIView):
   def post(self, request):
     serializer = SignInSerializer(data=request.data)
     if serializer.is_valid():
       user = serializer.validated_data['user']
+      if not user.is_verified:
+        return Response({"error": "Please verify your email before signing in"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
       refresh = RefreshToken.for_user(user)
       return Response({
         'refreshToken': str(refresh),
@@ -181,7 +182,6 @@ def GetFBUserInfo(request):
     return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
   
 
-
 @api_view(['POST'])
 def GetMsUserInfo(request):
   code = request.data.get('code')
@@ -258,23 +258,20 @@ def GetMsUserInfo(request):
       status=status.HTTP_500_INTERNAL_SERVER_ERROR
     )
         
-        
-   
-        
+      
 @api_view(['POST'])
 def verifyEmail(request):
-  token = request.headers.get('Authorization')
-  if not token or not token.startswith('Bearer '):
-    return Response({"error": "Invalid token header"}, status=status.HTTP_400_BAD_REQUEST)
-  
-  token = token.split(' ')[1]
+  token = request.data.get('token')
+  if not token:
+    return Response({"error": "Token is required"}, status=status.HTTP_400_BAD_REQUEST)
   try:
-    refresh_token = RefreshToken(token)
-    user = User.objects.get(id=refresh_token['user_id'])
+    access_token = AccessToken(token)
+    user = User.objects.get(id=access_token['user_id'])
     user.is_verified = True
     user.save()
     return Response({"message": "Email verified successfully"}, status=status.HTTP_200_OK)
   except Exception as e:
+    print(f"Error verifying email: {str(e)}")
     return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
   
   

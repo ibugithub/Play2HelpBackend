@@ -51,7 +51,7 @@ class SignInSerializer(serializers.Serializer):
   def validate(self, data):
     email = data.get('email')
     password = data.get('password')
-
+    print('the data is', data)
     if email and password:
       user = authenticate(request=self.context.get('request'), email=email, password=password)
       if not user:
@@ -65,7 +65,7 @@ class SignInSerializer(serializers.Serializer):
 class ListUserSerializer(serializers.ModelSerializer):
   class Meta:
     model = User
-    fields = ['id', 'email', 'name', 'is_active', 'is_admin']
+    fields = ['id', 'email', 'name', 'is_admin']
     
 class AccessTokenSerializer(serializers.Serializer):
   token = serializers.CharField()
