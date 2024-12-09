@@ -274,5 +274,27 @@ def verifyEmail(request):
     print(f"Error verifying email: {str(e)}")
     return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
   
+
+@api_view(['POST'])
+def reSendVerificationEmail(request):
+  email = request.data.get('email')
+  if not email:
+    return Response({"error": "Email is required"}, status=status.HTTP_400_BAD_REQUEST)
   
-  
+  try:
+    user = User.objects.get(email=email)
+    if user.is_verified:
+      return Response({"message": "Email is already verified"}, status=status.HTTP_200_OK)
+    
+    verification_token = RefreshToken.for_user(user).access_token
+    verification_url = f"{os.environ.get('FRONTEND_BASE_URL')}/accounts/verifyEmail?token={verification_token}"
+    send_email(
+      subject="Verify your email",
+      recipient_list=[user.email],
+      message=f"Please verify your email by clicking on the following link: {verification_url}"
+    )
+    return Response({"message": "Verification email sent successfully"}, status=status.HTTP_200_OK)
+  except User.DoesNotExist:
+    return Response({"error": "User with this email does not exist"}, status=status.HTTP_404_NOT_FOUND)
+  except Exception as e:
+    return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
