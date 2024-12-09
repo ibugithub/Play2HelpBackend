@@ -14,7 +14,10 @@ class UserSerializer(serializers.ModelSerializer):
     
     def validate_email(self, value):
       if User.objects.filter(email=value).exists():
-          raise serializers.ValidationError("Email already exists")
+        raise serializers.ValidationError("Email already exists")
+      email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+      if not re.match(email_regex, value):
+        raise serializers.ValidationError('Enter a valid email address.')
       return value
 
     def validate(self, data):
@@ -48,7 +51,7 @@ class SignInSerializer(serializers.Serializer):
   def validate(self, data):
     email = data.get('email')
     password = data.get('password')
-
+    print('the data is', data)
     if email and password:
       user = authenticate(request=self.context.get('request'), email=email, password=password)
       if not user:
@@ -59,13 +62,11 @@ class SignInSerializer(serializers.Serializer):
     data['user'] = user
     return data
   
-  
 class ListUserSerializer(serializers.ModelSerializer):
   class Meta:
     model = User
-    fields = ['id', 'email', 'name', 'is_active', 'is_admin']
+    fields = ['id', 'email', 'name', 'is_admin']
     
-
 class AccessTokenSerializer(serializers.Serializer):
   token = serializers.CharField()
 

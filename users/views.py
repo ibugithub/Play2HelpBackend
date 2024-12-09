@@ -2,7 +2,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .serializers import UserSerializer, SignInSerializer, ListUserSerializer, AccessTokenSerializer, ThirdPartyUserSerializer
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 from rest_framework import generics, permissions
 from .models import User
 import requests
@@ -12,14 +12,23 @@ from rest_framework import status
 import os
 import random
 import string
+from users.utils.sendEmail import send_email;
+
 
 class CreateUser(APIView):
   def post(self, request):
     serializer = UserSerializer(data=request.data)
     if serializer.is_valid():
       serializer.save()
+      user = serializer.instance
+      verification_token = RefreshToken.for_user(user).access_token
+      verification_url = f"{os.environ.get('FRONTEND_BASE_URL')}/accounts/verifyEmail?token={verification_token}"
+      send_email(
+        subject="Verify your email",
+        recipient_list=[user.email],
+        message=f"Please verify your email by clicking on the following link: {verification_url}"
+      )
       return Response(serializer.data, status=status.HTTP_201_CREATED)
-    
     # Extract the first error message
     errors = serializer.errors
     first_error = None
@@ -27,12 +36,14 @@ class CreateUser(APIView):
       first_error = error_list[0]
       break
     return Response({"error": first_error}, status=status.HTTP_400_BAD_REQUEST)
-  
+
 class SignInView(APIView):
   def post(self, request):
     serializer = SignInSerializer(data=request.data)
     if serializer.is_valid():
       user = serializer.validated_data['user']
+      if not user.is_verified:
+        return Response({"error": "Please verify your email before signing in"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
       refresh = RefreshToken.for_user(user)
       return Response({
         'refreshToken': str(refresh),
@@ -49,7 +60,6 @@ class ListUserView(generics.ListAPIView):
   queryset = User.objects.all()
   serializer_class = ListUserSerializer
   permission_classes = [permissions.IsAuthenticated]
-  
 
 class ValidateTokenView(APIView):
   def post(self, request):
@@ -82,6 +92,7 @@ def handleThrdProvUser(request, user):
     except User.DoesNotExist:
       password = generate_random_password()
       user = User.objects.create_user(email=email, name=name, password=password)
+      user.is_verified = True
     refresh = RefreshToken.for_user(user)
     accessToken =  str(refresh.access_token)
     refreshToken = str(refresh)
@@ -143,7 +154,6 @@ def GetGoogleUserInfo(request):
     return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-
 @api_view(['POST'])
 def GetFBUserInfo(request):
   code = request.data.get('code')
@@ -171,7 +181,6 @@ def GetFBUserInfo(request):
   except requests.RequestException as e:
     return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
   
-
 
 @api_view(['POST'])
 def GetMsUserInfo(request):
@@ -249,10 +258,21 @@ def GetMsUserInfo(request):
       status=status.HTTP_500_INTERNAL_SERVER_ERROR
     )
         
-        
-        
-        
-        
-        
-        
-        
+      
+@api_view(['POST'])
+def verifyEmail(request):
+  token = request.data.get('token')
+  if not token:
+    return Response({"error": "Token is required"}, status=status.HTTP_400_BAD_REQUEST)
+  try:
+    access_token = AccessToken(token)
+    user = User.objects.get(id=access_token['user_id'])
+    user.is_verified = True
+    user.save()
+    return Response({"message": "Email verified successfully"}, status=status.HTTP_200_OK)
+  except Exception as e:
+    print(f"Error verifying email: {str(e)}")
+    return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+  
+  
+  

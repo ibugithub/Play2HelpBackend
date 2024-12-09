@@ -19,7 +19,7 @@ class UserManager(BaseUserManager):
 class User(AbstractBaseUser):
   email = models.EmailField(unique=True)
   name = models.CharField(max_length=255)
-  is_active = models.BooleanField(default=True)
+  is_verified = models.BooleanField(default=False)
   is_admin = models.BooleanField(default=False)
 
   objects = UserManager()
