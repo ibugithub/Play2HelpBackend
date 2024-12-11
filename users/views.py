@@ -12,6 +12,8 @@ from rest_framework import status
 import os
 import random
 import string
+from games.models import Score
+from games.serializers import ScoreSerializer
 from users.utils.sendEmail import send_email;
 
 
@@ -341,3 +343,51 @@ def resetPassword(request):
     return Response({"message": "Password reset successfully"}, status=status.HTTP_200_OK)
   except Exception as e:
     return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+  
+class GetUserAndGameInfoView(APIView):
+  permission_classes = [permissions.IsAuthenticated]
+
+  def get(self, request):
+    auth_header = request.headers.get('Authorization')
+    if not auth_header or not auth_header.startswith('Bearer '):
+      return Response({"error": "Invalid token header"}, status=status.HTTP_400_BAD_REQUEST)
+    token = auth_header.split(' ')[1]
+    try:
+      access_token = AccessToken(token)
+      user = User.objects.get(id=access_token['user_id'])
+      user_info = UserSerializer(user).data
+
+      # Assuming you have a Game model and serializer
+
+      games = Score.objects.filter(user=user)
+      game_info = ScoreSerializer(games, many=True).data
+      all_reward = sum(game['tokens'] for game in game_info)
+      print('the user is', user_info)
+      print('the game info is', game_info)
+      print('the reward is', all_reward)
+      return Response({
+        "rewards": all_reward,
+      }, status=status.HTTP_200_OK)
+    except Exception as e:
+      return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    
+    
+class ClaimTokensView(APIView):
+  permission_classes = [permissions.IsAuthenticated]
+
+  def post(self, request):
+    auth_header = request.headers.get('Authorization')
+    if not auth_header or not auth_header.startswith('Bearer '):
+      return Response({"error": "Invalid token header"}, status=status.HTTP_400_BAD_REQUEST)
+    token = auth_header.split(' ')[1]
+    claimed_tokens = request.data.get('claimed_tokens')
+    if claimed_tokens is None:
+      return Response({"error": "Claimed tokens are required"}, status=status.HTTP_400_BAD_REQUEST)
+    try:
+      access_token = AccessToken(token)
+      user = User.objects.get(id=access_token['user_id'])
+      user.claimed_tokens += claimed_tokens
+      user.save()
+      return Response({"message": "Tokens claimed successfully"}, status=status.HTTP_200_OK)
+    except Exception as e:
+      return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
