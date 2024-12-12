@@ -12,7 +12,7 @@ from rest_framework import status
 import os
 import random
 import string
-from games.models import Score
+from games.models import Score, Tokens
 from games.serializers import ScoreSerializer
 from users.utils.sendEmail import send_email;
 
@@ -276,7 +276,6 @@ def verifyEmail(request):
     print(f"Error verifying email: {str(e)}")
     return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
   
-
 @api_view(['POST'])
 def reSendVerificationEmail(request):
   email = request.data.get('email')
@@ -301,8 +300,6 @@ def reSendVerificationEmail(request):
   except Exception as e:
     return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
   
-  
-  
 @api_view(['POST'])
 def forgetPassword(request):
   email = request.data.get('email')
@@ -323,8 +320,6 @@ def forgetPassword(request):
     return Response({"error": "User with this email does not exist"}, status=status.HTTP_404_NOT_FOUND)
   except Exception as e:
     return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-  
-  
   
 @api_view(['POST'])
 def resetPassword(request):
@@ -355,39 +350,13 @@ class GetUserAndGameInfoView(APIView):
     try:
       access_token = AccessToken(token)
       user = User.objects.get(id=access_token['user_id'])
-      user_info = UserSerializer(user).data
+      tokenModel = Tokens.objects.get(user=user)
+      total_tokens = tokenModel.total_tokens
 
-      # Assuming you have a Game model and serializer
-
-      games = Score.objects.filter(user=user)
-      game_info = ScoreSerializer(games, many=True).data
-      all_reward = sum(game['tokens'] for game in game_info)
-      print('the user is', user_info)
-      print('the game info is', game_info)
-      print('the reward is', all_reward)
+      print('the total tokens are', total_tokens)
       return Response({
-        "rewards": all_reward,
+        "total_tokens": total_tokens,
       }, status=status.HTTP_200_OK)
     except Exception as e:
-      return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-    
-    
-class ClaimTokensView(APIView):
-  permission_classes = [permissions.IsAuthenticated]
+      return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)   
 
-  def post(self, request):
-    auth_header = request.headers.get('Authorization')
-    if not auth_header or not auth_header.startswith('Bearer '):
-      return Response({"error": "Invalid token header"}, status=status.HTTP_400_BAD_REQUEST)
-    token = auth_header.split(' ')[1]
-    claimed_tokens = request.data.get('claimed_tokens')
-    if claimed_tokens is None:
-      return Response({"error": "Claimed tokens are required"}, status=status.HTTP_400_BAD_REQUEST)
-    try:
-      access_token = AccessToken(token)
-      user = User.objects.get(id=access_token['user_id'])
-      user.claimed_tokens += claimed_tokens
-      user.save()
-      return Response({"message": "Tokens claimed successfully"}, status=status.HTTP_200_OK)
-    except Exception as e:
-      return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
