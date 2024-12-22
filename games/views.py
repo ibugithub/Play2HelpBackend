@@ -100,9 +100,8 @@ class ListAllScores(generics.ListAPIView):
     def get_queryset(self):
         game = self.request.query_params.get('game')
         if game:
-            print('the score obj is', Score.objects.filter(game=game))
-            return Score.objects.filter(game=game)
-        return Score.objects.all()
+            return Score.objects.filter(game=game).order_by('-score')
+        return Score.objects.all().order_by('-score')
 
 
 class SetClaimTokensView(APIView):
