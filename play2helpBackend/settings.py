@@ -94,7 +94,7 @@ WSGI_APPLICATION = 'play2helpBackend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'play2help2',
+        'NAME': 'play2Help',
         'USER': 'play2world-mysql',
         'PASSWORD': ',DZzqU>/*UUxDRp/',
         'HOST': '34.58.236.217',
