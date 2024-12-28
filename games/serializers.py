@@ -18,6 +18,10 @@ class MemberSerializer(serializers.ModelSerializer):
     fields = '__all__'
     
 class TotalScoreSerializer(serializers.ModelSerializer):
-  class Meta:
-    model = TotalScore
-    fields = '__all__'  
+    user = serializers.SerializerMethodField()
+    class Meta:
+        model = TotalScore
+        fields = '__all__'
+
+    def get_user(self, obj):
+        return obj.user.name

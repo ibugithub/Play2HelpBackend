@@ -33,7 +33,6 @@ class Brands(models.Model):
   def __str__(self):
     return f"{self.name}"
 
-
 class Members(models.Model):
   ROLE_CHOICES = [
     ('founder', 'Founder'),
@@ -55,7 +54,6 @@ class Members(models.Model):
   def __str__(self):
       return f"{self.name}: {self.role}"
 
-
 class Score(models.Model):
   user = models.ForeignKey(User, on_delete=models.CASCADE)
   game = models.ForeignKey(Game, on_delete=models.CASCADE)
@@ -67,7 +65,6 @@ class Score(models.Model):
   updated_at = models.DateTimeField(auto_now=True)
   def __str__(self):
     return f"{self.user.name}: {self.score}"
-
 
 class TotalScore(models.Model):
   user = models.ForeignKey(User, on_delete=models.CASCADE)
