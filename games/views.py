@@ -1,4 +1,4 @@
-from .serializers import ScoreSerializer, TokenInfoSerializer
+from .serializers import ScoreSerializer, TokenInfoSerializer, MemberSerializer, TotalScoreSerializer
 from rest_framework.views import APIView
 from rest_framework import generics
 from rest_framework import status
@@ -8,7 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from .models import Score
 from django.utils.dateparse import parse_datetime
 from rest_framework import generics, permissions
-from .models import MerkelDatastructure, Game, TokenInfo
+from .models import MerkelDatastructure, Game, TokenInfo, Members, TotalScore
 
 class SubmitScoreView(APIView):
     authentication_classes = [JWTAuthentication]
@@ -35,10 +35,9 @@ class SubmitScoreView(APIView):
             return Response({'error': 'Score must be an integer.'}, status=status.HTTP_400_BAD_REQUEST)
 
         user = request.user
-        print('the user is', user)
-        print('the game is', game.id)
         # Check if a score entry already exists for the user and game
         existing_score = Score.objects.filter(user=user, game=game.id).first()
+        existing_total_score = TotalScore.objects.filter(user=user).first()
 
         if existing_score:
             existing_score.score += score
@@ -54,6 +53,13 @@ class SubmitScoreView(APIView):
                 print('the serializer error is', serializer.errors)
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+        if existing_total_score:
+            existing_total_score.total_score += score
+            existing_total_score.total_tokens += tokens
+            existing_total_score.save()
+        else:
+            TotalScore.objects.create(user=user, total_score=score, total_tokens=tokens)
+            
         return Response({**score_response}, status=status.HTTP_200_OK)
 
 class ScoreListView(generics.ListAPIView):
@@ -163,3 +169,25 @@ class GetScoreDataView(APIView):
       }, status=status.HTTP_200_OK)
     except Exception as e:
       return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)   
+
+class GetTotalScoresView(APIView):
+    def get(self, request):
+        try:
+            total_scores = TotalScore.objects.all().order_by('-total_score')
+            serializer = TotalScoreSerializer(total_scores, many=True)
+            return Response({
+                "total_scores": serializer.data,
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+class getMemberData(APIView):
+    def get(self, request):
+        try:
+            member = Members.objects.all()
+            serializer = MemberSerializer(member, many=True)
+            return Response({
+                "member": serializer.data,
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)

@@ -25,6 +25,37 @@ class Game(models.Model):
   def __str__(self):
     return f"{self.name}"
 
+class Brands(models.Model):
+  name = models.CharField(max_length=100)
+  started_date = models.DateField(null=True, blank=True)
+  created_at = models.DateTimeField(auto_now_add=True)
+  updated_at = models.DateTimeField(auto_now=True)
+  def __str__(self):
+    return f"{self.name}"
+
+
+class Members(models.Model):
+  ROLE_CHOICES = [
+    ('founder', 'Founder'),
+    ('CEO', 'CEO'),
+    ('devs', 'Developer'),
+    ('product manager', 'Product Manager'),
+    ('consultant', 'Consultant'),
+  ]
+  name = models.CharField(max_length=100)
+  user = models.ForeignKey(User, on_delete=models.DO_NOTHING, null=True, blank=True)
+  brands = models.ManyToManyField(Brands, blank=True)
+  role = models.CharField(max_length=50, choices=ROLE_CHOICES)
+  joined_date = models.DateField(null=True, blank=True)
+  earned_tokens = models.FloatField(default=0.0, null=True, blank=True)
+  earned_dollars = models.FloatField(default=0.0, null=True, blank=True)
+  created_at = models.DateTimeField(auto_now_add=True)
+  updated_at = models.DateTimeField(auto_now=True)
+
+  def __str__(self):
+      return f"{self.name}: {self.role}"
+
+
 class Score(models.Model):
   user = models.ForeignKey(User, on_delete=models.CASCADE)
   game = models.ForeignKey(Game, on_delete=models.CASCADE)
@@ -36,6 +67,17 @@ class Score(models.Model):
   updated_at = models.DateTimeField(auto_now=True)
   def __str__(self):
     return f"{self.user.name}: {self.score}"
+
+
+class TotalScore(models.Model):
+  user = models.ForeignKey(User, on_delete=models.CASCADE)
+  total_score = models.IntegerField()
+  total_tokens = models.FloatField(default=0.0)
+  claimed_tokens = models.FloatField(default=0.0)
+  created_at = models.DateTimeField(auto_now_add=True)
+  updated_at = models.DateTimeField(auto_now=True)
+  def __str__(self):
+    return f"{self.user.name}: {self.total_score}"
 
 class MerkelDatastructure(models.Model):
   serialized_leaves = models.CharField(max_length=1000)
