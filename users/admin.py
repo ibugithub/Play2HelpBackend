@@ -3,7 +3,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import User
 
 class UserAdmin(BaseUserAdmin):
-    list_display = ('email', 'name', 'is_verified', 'is_admin', 'wallet_address')
+    list_display = ('email', 'name', 'user_Image_url', 'is_verified', 'is_admin', 'wallet_address')
     list_filter = ('is_admin',)
     fieldsets = (
         ('Basic', {'fields': ('email', 'password')}),

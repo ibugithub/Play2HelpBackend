@@ -1,4 +1,4 @@
-from .serializers import ScoreSerializer, TokenInfoSerializer, MemberSerializer, TotalScoreSerializer
+from .serializers import ScoreSerializer, TokenInfoSerializer, MemberSerializer, TotalScoreSerializer, MerkelDatastructureSerializer
 from rest_framework.views import APIView
 from rest_framework import generics
 from rest_framework import status
@@ -90,6 +90,9 @@ class ListAllScores(generics.ListAPIView):
             return Score.objects.filter(game=game).order_by('-score')
         return Score.objects.all().order_by('-score')
 
+
+
+
 # class SetClaimTokensView(APIView):
 #   permission_classes = [permissions.IsAuthenticated]
 
@@ -117,42 +120,49 @@ class ListAllScores(generics.ListAPIView):
 #     except Exception as e:
 #       return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+
+
+
+
+
 class MerkelDataView(APIView):
     def post(self, request):
-        serialized_leaves = request.data.get('serialized_leaves')
-        modified_date = request.data.get('modified_date')
+        serializer = MerkelDatastructureSerializer(data=request.data)
 
-        # Validate the input data
-        if not serialized_leaves or not modified_date:
+        # Validate the data using the serializer
+        if serializer.is_valid():
+            serializer.save()
             return Response(
-                {"error": "Both 'serializedLeaves' and 'modifiedDate' are required."},
+                {"message": "Data saved successfully", "data": serializer.data},
+                status=status.HTTP_201_CREATED
+            )
+        else:
+            return Response(
+                {"error": serializer.errors},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+
+class GetMerkelDataView(APIView):
+    def get(self, request):
+        """
+        Get the single MerkelDatastructure entry.
+        """
         try:
-            # Parse modified_date to ensure it's in a valid datetime format
-            parsed_modified_date = parse_datetime(modified_date)
-            if not parsed_modified_date:
+            merkel_data = MerkelDatastructure.objects.first()
+            if not merkel_data:
                 return Response(
-                    {"error": "Invalid date format for 'modifiedDate'. Use ISO 8601 format."},
-                    status=status.HTTP_400_BAD_REQUEST
+                    {"error": "No data found."}, status=status.HTTP_404_NOT_FOUND
                 )
 
-            merkel_data = MerkelDatastructure.objects.create(
-                serialized_leaves=serialized_leaves,
-                modified_date=parsed_modified_date
-            )
-
-            return Response(
-                {"message": "Data saved successfully", "id": merkel_data.id},
-                status=status.HTTP_201_CREATED
-            )
-
+            serializer = MerkelDatastructureSerializer(merkel_data)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
             return Response(
                 {"error": f"An error occurred: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
 
 class GetScoreDataView(APIView):
   permission_classes = [permissions.IsAuthenticated]

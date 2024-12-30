@@ -22,6 +22,7 @@ class User(AbstractBaseUser):
   is_verified = models.BooleanField(default=False)
   is_admin = models.BooleanField(default=False)
   wallet_address = models.CharField(max_length=600, default=None, null=True, blank=True)
+  user_Image_url = models.CharField(max_length=600, default=None, null=True, blank=True)
   objects = UserManager()
 
   USERNAME_FIELD = 'email'

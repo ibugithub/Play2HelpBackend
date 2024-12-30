@@ -1,5 +1,5 @@
 from rest_framework import serializers;
-from .models import Score, TokenInfo, Members, TotalScore
+from .models import Score, TokenInfo, Members, TotalScore, MerkelDatastructure
 class ScoreSerializer(serializers.ModelSerializer):
   user = serializers.CharField(source='user.name', read_only=True)
   game = serializers.CharField(source='game.name', read_only=True)
@@ -25,3 +25,10 @@ class TotalScoreSerializer(serializers.ModelSerializer):
 
     def get_user(self, obj):
         return obj.user.name
+      
+      
+class MerkelDatastructureSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MerkelDatastructure
+        fields = ['id', 'serialized_leaves', 'modified_date', 'created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at']
