@@ -11,6 +11,8 @@ from django.utils.dateparse import parse_datetime
 from rest_framework import generics, permissions
 from .models import MerkelDatastructure, Game, TokenInfo, Members, TotalScore
 
+
+
 class SubmitScoreView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -75,7 +77,6 @@ class ScoreListView(generics.ListAPIView):
     def list(self, request, *args, **kwargs):
         response = super().list(request, *args, **kwargs)
         user = request.user
-        print('the response.data is', response.data)
         response.data = {
             'scores': response.data
         }
@@ -93,24 +94,21 @@ class ListAllScores(generics.ListAPIView):
 
 class SetClaimTokensView(APIView):
   permission_classes = [permissions.IsAuthenticated]
+  authentication_classes = [JWTAuthentication]
 
   def post(self, request):
-    auth_header = request.headers.get('Authorization')
-    if not auth_header or not auth_header.startswith('Bearer '):
-      return Response({"error": "Invalid token header"}, status=status.HTTP_400_BAD_REQUEST)
-    token = auth_header.split(' ')[1]
-    claimed_tokens = request.data.get('claimed_tokens')
+    claimed_tokens = float(request.data.get('claimed_tokens'))
     last_claimed_date = request.data.get('last_claimed_date')
+    game = request.data.get('game')
+    gameModel = Game.objects.get(name=game)
     if not last_claimed_date:
       return Response({"error": "last claimed date is required"}, status=status.HTTP_400_BAD_REQUEST)
     if claimed_tokens is None:
       return Response({"error": "Claimed tokens are required"}, status=status.HTTP_400_BAD_REQUEST)
     try:
-      access_token = AccessToken(token)
-      user = User.objects.get(id=access_token['user_id'])
-      scoreModel = Score.objects.get(user=user)
+      user = request.user
+      scoreModel = Score.objects.get(user=user, game=gameModel)
       scoreModel.claimed_tokens += claimed_tokens
-      scoreModel.total_tokens -= claimed_tokens
       scoreModel.last_claimed_date = last_claimed_date
       # the date format =>  "last_claimed_date": "2024-12-12T12:34:56Z"
       scoreModel.save()
@@ -192,25 +190,31 @@ class getMemberData(APIView):
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
-        
-        
-        
-        
 class GetAllScoresWithTokenInfo(APIView):
-    print('The GetAllScores view is initialized')
-
     def get(self, request, *args, **kwargs):
         try:
             allScores = Score.objects.all()
-            if allScores:
-                print('First score is', allScores[0].game.tokenInfo.bnb_contract_address)
-                print('the token amount is', allScores[0].tokens)
+            scores_with_token_info = []
+
+            if allScores.exists():
+                for score in allScores:
+                    try:
+                        userWalletAddress = score.user.wallet_address
+                        tokenAmount = score.tokens
+                        tokenAddress = score.game.tokenInfo.bnb_contract_address
+                        scores_with_token_info.append({
+                            "userWalletAddress": userWalletAddress,
+                            "tokenAmount": tokenAmount,
+                            "tokenAddress": tokenAddress,
+                        })
+                    except AttributeError as attr_error:
+                        print(f"Missing data for score ID {score.id}: {str(attr_error)}")
+                print("Scores with token info:", scores_with_token_info)
             else:
-                print('No scores found in the database.')
-            
-            serializer = ScoreSerializer(allScores, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+                print("No scores found in the database.")
+
+            return Response(scores_with_token_info, status=status.HTTP_200_OK)
 
         except Exception as e:
-            print('An error occurred:', str(e))
-            return Response({"error": "An error occurred while retrieving scores."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)    
+            print("An error occurred:", str(e))
+            return Response({"error": "An error occurred while retrieving scores."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

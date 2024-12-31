@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from .serializers import UserSerializer, SignInSerializer, ListUserSerializer, AccessTokenSerializer, ThirdPartyUserSerializer
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework import generics, permissions
 from .models import User
 import requests
@@ -15,7 +16,7 @@ import string
 from games.models import Score
 from games.serializers import ScoreSerializer
 from users.utils.sendEmail import send_email;
-
+from rest_framework.permissions import IsAuthenticated
 
 class CreateUser(APIView):
   def post(self, request):
@@ -81,7 +82,6 @@ def generate_random_password(length=12):
   characters = string.ascii_letters + string.digits + string.punctuation
   return ''.join(random.choice(characters) for i in range(length))
   
-  
 @api_view(['POST'])
 def handleThrdProvUser(request, user):
   serializer = ThirdPartyUserSerializer(data=user)
@@ -105,7 +105,6 @@ def handleThrdProvUser(request, user):
       'user': UserSerializer(user).data
     }, status=status.HTTP_200_OK)
   return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 @api_view(['POST'])
 def GetGoogleUserInfo(request):
@@ -157,7 +156,6 @@ def GetGoogleUserInfo(request):
   except requests.RequestException as e:
     return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
 @api_view(['POST'])
 def GetFBUserInfo(request):
   code = request.data.get('code')
@@ -186,7 +184,6 @@ def GetFBUserInfo(request):
   except requests.RequestException as e:
     return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
   
-
 @api_view(['POST'])
 def GetMsUserInfo(request):
   code = request.data.get('code')
@@ -279,7 +276,6 @@ def GetMsUserInfo(request):
       status=status.HTTP_500_INTERNAL_SERVER_ERROR
     )
         
-      
 @api_view(['POST'])
 def verifyEmail(request):
   token = request.data.get('token')
@@ -358,4 +354,19 @@ def resetPassword(request):
   except Exception as e:
     return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
   
-
+class saveWalletAddress(APIView):
+  authentication_classes = [JWTAuthentication]
+  permission_classes = [IsAuthenticated]
+  
+  def post(self, request):
+    wallet_address = request.data.get('wallet_address')
+    if not wallet_address:
+      return Response({"error": "Wallet address is required"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+      user = request.user
+      user.wallet_address = wallet_address
+      user.save()
+      return Response({"message": "Wallet address saved successfully"}, status=status.HTTP_200_OK)
+    except Exception as e:
+      return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
