@@ -4,8 +4,9 @@ from rest_framework import generics
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework.permissions import IsAuthenticated
-from .models import Score
+from .models import Score, User
 from django.utils.dateparse import parse_datetime
 from rest_framework import generics, permissions
 from .models import MerkelDatastructure, Game, TokenInfo, Members, TotalScore
@@ -90,40 +91,32 @@ class ListAllScores(generics.ListAPIView):
             return Score.objects.filter(game=game).order_by('-score')
         return Score.objects.all().order_by('-score')
 
+class SetClaimTokensView(APIView):
+  permission_classes = [permissions.IsAuthenticated]
 
-
-
-# class SetClaimTokensView(APIView):
-#   permission_classes = [permissions.IsAuthenticated]
-
-#   def post(self, request):
-#     auth_header = request.headers.get('Authorization')
-#     if not auth_header or not auth_header.startswith('Bearer '):
-#       return Response({"error": "Invalid token header"}, status=status.HTTP_400_BAD_REQUEST)
-#     token = auth_header.split(' ')[1]
-#     claimed_tokens = request.data.get('claimed_tokens')
-#     last_claimed_date = request.data.get('last_claimed_date')
-#     if not last_claimed_date:
-#       return Response({"error": "last claimed date is required"}, status=status.HTTP_400_BAD_REQUEST)
-#     if claimed_tokens is None:
-#       return Response({"error": "Claimed tokens are required"}, status=status.HTTP_400_BAD_REQUEST)
-#     try:
-#       access_token = AccessToken(token)
-#       user = User.objects.get(id=access_token['user_id'])
-#       tokensModel = Tokens.objects.get(user=user)
-#       tokensModel.claimed_tokens += claimed_tokens
-#       tokensModel.total_tokens -= claimed_tokens
-#       tokensModel.last_claimed_date = last_claimed_date
-#       # the date format =>  "last_claimed_date": "2024-12-12T12:34:56Z"
-#       tokensModel.save()
-#       return Response({"message": "Tokens claimed successfully"}, status=status.HTTP_200_OK)
-#     except Exception as e:
-#       return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-
-
-
-
+  def post(self, request):
+    auth_header = request.headers.get('Authorization')
+    if not auth_header or not auth_header.startswith('Bearer '):
+      return Response({"error": "Invalid token header"}, status=status.HTTP_400_BAD_REQUEST)
+    token = auth_header.split(' ')[1]
+    claimed_tokens = request.data.get('claimed_tokens')
+    last_claimed_date = request.data.get('last_claimed_date')
+    if not last_claimed_date:
+      return Response({"error": "last claimed date is required"}, status=status.HTTP_400_BAD_REQUEST)
+    if claimed_tokens is None:
+      return Response({"error": "Claimed tokens are required"}, status=status.HTTP_400_BAD_REQUEST)
+    try:
+      access_token = AccessToken(token)
+      user = User.objects.get(id=access_token['user_id'])
+      scoreModel = Score.objects.get(user=user)
+      scoreModel.claimed_tokens += claimed_tokens
+      scoreModel.total_tokens -= claimed_tokens
+      scoreModel.last_claimed_date = last_claimed_date
+      # the date format =>  "last_claimed_date": "2024-12-12T12:34:56Z"
+      scoreModel.save()
+      return Response({"message": "Tokens claimed successfully"}, status=status.HTTP_200_OK)
+    except Exception as e:
+      return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class MerkelDataView(APIView):
     def post(self, request):
@@ -141,7 +134,6 @@ class MerkelDataView(APIView):
                 {"error": serializer.errors},
                 status=status.HTTP_400_BAD_REQUEST
             )
-
 
 class GetMerkelDataView(APIView):
     def get(self, request):
@@ -163,13 +155,11 @@ class GetMerkelDataView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-
 class GetScoreDataView(APIView):
   permission_classes = [permissions.IsAuthenticated]
 
   def get(self, request):
     gameName = request.GET.get('gameName')
-    print('the game name is', gameName)
     try:
       game = Game.objects.get(name=gameName)
       tokenInfo = TokenInfo.objects.get(id=game.tokenInfo.id)
@@ -201,3 +191,26 @@ class getMemberData(APIView):
             }, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+        
+        
+        
+        
+class GetAllScoresWithTokenInfo(APIView):
+    print('The GetAllScores view is initialized')
+
+    def get(self, request, *args, **kwargs):
+        try:
+            allScores = Score.objects.all()
+            if allScores:
+                print('First score is', allScores[0].game.tokenInfo.bnb_contract_address)
+                print('the token amount is', allScores[0].tokens)
+            else:
+                print('No scores found in the database.')
+            
+            serializer = ScoreSerializer(allScores, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            print('An error occurred:', str(e))
+            return Response({"error": "An error occurred while retrieving scores."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)    
