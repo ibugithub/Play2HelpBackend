@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from .serializers import UserSerializer, SignInSerializer, ListUserSerializer, AccessTokenSerializer, ThirdPartyUserSerializer
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework import generics, permissions
 from .models import User
 import requests
@@ -15,7 +16,7 @@ import string
 from games.models import Score
 from games.serializers import ScoreSerializer
 from users.utils.sendEmail import send_email;
-
+from rest_framework.permissions import IsAuthenticated
 
 class CreateUser(APIView):
   def post(self, request):
@@ -81,7 +82,6 @@ def generate_random_password(length=12):
   characters = string.ascii_letters + string.digits + string.punctuation
   return ''.join(random.choice(characters) for i in range(length))
   
-  
 @api_view(['POST'])
 def handleThrdProvUser(request, user):
   serializer = ThirdPartyUserSerializer(data=user)
@@ -89,11 +89,12 @@ def handleThrdProvUser(request, user):
     user_data = serializer.validated_data 
     email = user_data['email']
     name = user_data['name']
+    userImage = user_data['picture']
     try:
       user = User.objects.get(email=email)
     except User.DoesNotExist:
       password = generate_random_password()
-      user = User.objects.create_user(email=email, name=name, password=password)
+      user = User.objects.create_user(email=email, name=name, password=password, user_Image_url=userImage)
       user.is_verified = True
     refresh = RefreshToken.for_user(user)
     accessToken =  str(refresh.access_token)
@@ -104,7 +105,6 @@ def handleThrdProvUser(request, user):
       'user': UserSerializer(user).data
     }, status=status.HTTP_200_OK)
   return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 @api_view(['POST'])
 def GetGoogleUserInfo(request):
@@ -149,12 +149,12 @@ def GetGoogleUserInfo(request):
     user_data = user_info_response.json()
     user = {
       'name': user_data['name'],
-      'email': user_data['email']
+      'email': user_data['email'],
+      'picture': user_data['picture'],
     }
     return handleThrdProvUser(request._request, user)
   except requests.RequestException as e:
     return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 @api_view(['POST'])
 def GetFBUserInfo(request):
@@ -179,11 +179,11 @@ def GetFBUserInfo(request):
     )
     user_info_response.raise_for_status()
     user = user_info_response.json()
+    print('the user is ', user)
     return handleThrdProvUser(request._request, user)
   except requests.RequestException as e:
     return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
   
-
 @api_view(['POST'])
 def GetMsUserInfo(request):
   code = request.data.get('code')
@@ -245,9 +245,25 @@ def GetMsUserInfo(request):
         'Accept': 'application/json'
       }
     )
+    
+    # Fetch user photo
+    photo_response = requests.get(
+      "https://graph.microsoft.com/v1.0/me/photo/$value",
+      headers={
+          'Authorization': f'Bearer {access_token}',
+          'Accept': 'application/json'
+      }
+    )
+    if photo_response.status_code == 200:
+      user_image_url = photo_response.url
+      print('the user image url is', user_image_url)
+    else:
+        user_image_url = None 
+    
+    
     user_info_response.raise_for_status()
     user_data = user_info_response.json()
-    
+    print('the user data is', user_data)
     user = {
       'name': user_data['displayName'],
       'email': user_data['mail']
@@ -260,7 +276,6 @@ def GetMsUserInfo(request):
       status=status.HTTP_500_INTERNAL_SERVER_ERROR
     )
         
-      
 @api_view(['POST'])
 def verifyEmail(request):
   token = request.data.get('token')
@@ -339,4 +354,19 @@ def resetPassword(request):
   except Exception as e:
     return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
   
-
+class saveWalletAddress(APIView):
+  authentication_classes = [JWTAuthentication]
+  permission_classes = [IsAuthenticated]
+  
+  def post(self, request):
+    wallet_address = request.data.get('wallet_address')
+    if not wallet_address:
+      return Response({"error": "Wallet address is required"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+      user = request.user
+      user.wallet_address = wallet_address
+      user.save()
+      return Response({"message": "Wallet address saved successfully"}, status=status.HTTP_200_OK)
+    except Exception as e:
+      return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
