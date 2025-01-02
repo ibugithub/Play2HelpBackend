@@ -119,19 +119,23 @@ class SetClaimTokensView(APIView):
 class MerkelDataView(APIView):
     def post(self, request):
         serializer = MerkelDatastructureSerializer(data=request.data)
-
-        # Validate the data using the serializer
+        
         if serializer.is_valid():
-            serializer.save()
+            instance, created = MerkelDatastructure.objects.update_or_create(
+                id=MerkelDatastructure.objects.first().id if MerkelDatastructure.objects.exists() else None,
+                defaults=serializer.validated_data
+            )
+            
             return Response(
-                {"message": "Data saved successfully", "data": serializer.data},
-                status=status.HTTP_201_CREATED
+                {"message": "Data saved successfully", "data": MerkelDatastructureSerializer(instance).data},
+                status=status.HTTP_201_CREATED if created else status.HTTP_200_OK
             )
         else:
             return Response(
                 {"error": serializer.errors},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
 
 class GetMerkelDataView(APIView):
     def get(self, request):
