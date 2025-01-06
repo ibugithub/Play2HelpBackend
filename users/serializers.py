@@ -37,7 +37,6 @@ class UserSerializer(serializers.ModelSerializer):
 class ThirdPartyUserSerializer(serializers.Serializer):
   name = serializers.CharField()
   email = serializers.EmailField()
-  picture = serializers.URLField()
   
 class SignInSerializer(serializers.Serializer):
   email = serializers.EmailField()
