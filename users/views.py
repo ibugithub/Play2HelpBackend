@@ -89,12 +89,11 @@ def handleThrdProvUser(request, user):
     user_data = serializer.validated_data 
     email = user_data['email']
     name = user_data['name']
-    userImage = user_data['picture']
     try:
       user = User.objects.get(email=email)
     except User.DoesNotExist:
       password = generate_random_password()
-      user = User.objects.create_user(email=email, name=name, password=password, user_Image_url=userImage)
+      user = User.objects.create_user(email=email, name=name, password=password)
       user.is_verified = True
     refresh = RefreshToken.for_user(user)
     accessToken =  str(refresh.access_token)
@@ -179,7 +178,6 @@ def GetFBUserInfo(request):
     )
     user_info_response.raise_for_status()
     user = user_info_response.json()
-    print('the user is ', user)
     return handleThrdProvUser(request._request, user)
   except requests.RequestException as e:
     return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -197,7 +195,6 @@ def GetMsUserInfo(request):
     client_id = os.environ.get('MICROSOFT_CLIENT_ID')
     client_secret = os.environ.get('MICROSOFT_CLIENT_SECRET')
     redirect_uri = f"{os.environ.get('FRONTEND_BASE_URL')}/{os.environ.get('MICROSOFT_REDIRECT_URI')}"
-    print('the redirect uri is', redirect_uri)
     
     token_url = "https://login.microsoftonline.com/common/oauth2/v2.0/token"
     token_data = {
@@ -246,31 +243,14 @@ def GetMsUserInfo(request):
       }
     )
     
-    # Fetch user photo
-    photo_response = requests.get(
-      "https://graph.microsoft.com/v1.0/me/photo/$value",
-      headers={
-          'Authorization': f'Bearer {access_token}',
-          'Accept': 'application/json'
-      }
-    )
-    if photo_response.status_code == 200:
-      user_image_url = photo_response.url
-      print('the user image url is', user_image_url)
-    else:
-        user_image_url = None 
-    
-    
     user_info_response.raise_for_status()
     user_data = user_info_response.json()
-    print('the user data is', user_data)
     user = {
       'name': user_data['displayName'],
       'email': user_data['mail']
     }
     return handleThrdProvUser(request._request, user)
   except requests.RequestException as e:
-    print(f"Request failed: {str(e)}")
     return Response(
       {'error': str(e)}, 
       status=status.HTTP_500_INTERNAL_SERVER_ERROR
