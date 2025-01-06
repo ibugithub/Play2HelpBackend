@@ -32,12 +32,12 @@ class MerkelDataStructureAdmin(admin.ModelAdmin):
     ordering = ('-created_at',)
     
 class BrandsAdmin(admin.ModelAdmin):
-    list_display = ('name', 'started_date', 'created_at', 'updated_at')
+    list_display = ('name', 'total_value', 'total_tokens', 'token_prices', 'token_count_date', 'token_duration', 'started_date', 'created_at', 'updated_at')
     search_fields = ('name',)
     ordering = ('-created_at',)
 
 class MembersAdmin(admin.ModelAdmin):
-    list_display = ('name', 'user', 'get_brands', 'role', 'joined_date', 'created_at', 'updated_at') 
+    list_display = ('name', 'user', 'get_brands', 'role', 'joined_date', 'earned_tokens', 'earned_dollars', 'ownership', 'created_at', 'updated_at') 
     list_filter = ('name', 'role', 'created_at')
     search_fields = ('name', 'role') 
     ordering = ('-created_at',)

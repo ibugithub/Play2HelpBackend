@@ -26,9 +26,9 @@ class TotalScoreSerializer(serializers.ModelSerializer):
     def get_user(self, obj):
         return obj.user.name
       
-      
 class MerkelDatastructureSerializer(serializers.ModelSerializer):
     class Meta:
         model = MerkelDatastructure
         fields = ['id', 'serialized_leaves', 'modified_date', 'created_at', 'updated_at']
         read_only_fields = ['created_at', 'updated_at']
+        
