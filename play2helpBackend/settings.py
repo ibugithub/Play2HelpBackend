@@ -25,7 +25,7 @@ from datetime import timedelta
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get("SECRET_KEY") 
+SECRET_KEY = os.environ.get("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DEBUG", "False").lower() == 'true'
@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'users',
     'games',
+    'admanager',
 ]
 
 MIDDLEWARE = [
@@ -149,7 +150,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-AUTH_USER_MODEL = 'users.User' 
+AUTH_USER_MODEL = 'users.User'
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -161,14 +162,14 @@ CORS_ALLOW_CREDENTIALS = True
 accessTokenTime = int(os.environ.get("ACCESS_TOKEN_TIME"))
 refreshTokenTime = int(os.environ.get("REFRESH_TOKEN_TIME"))
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=accessTokenTime), 
-    'REFRESH_TOKEN_LIFETIME': timedelta(minutes=refreshTokenTime), 
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=accessTokenTime),
+    'REFRESH_TOKEN_LIFETIME': timedelta(minutes=refreshTokenTime),
 }
 
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587 
+EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
