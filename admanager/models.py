@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils.timezone import now
+from django.template.loader import render_to_string
 
 class Ad(models.Model):
     source = models.CharField(max_length=50)  # e.g., "Amazon", "Alibaba"
@@ -21,6 +22,23 @@ class Ad(models.Model):
     embeded_code = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(default=now)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        rendered_html = render_to_string('ad_template.html', {
+            'title': self.title,
+            'description': self.description,
+            'brand': self.brand or 'N/A',
+            'category': self.category,
+            'price_original': self.price_original,
+            'price_discounted': self.price_discounted,
+            'currency': self.currency,
+            'affiliate_link': self.affiliate_link,
+            'image_urls': self.image_urls,
+            'stock_status': self.stock_status,
+        })
+        # Remove newlines and extra whitespace
+        self.embeded_code = "".join(rendered_html.splitlines())
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.title
