@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import SubmitScoreView, ScoreListView, ListAllScores, MerkelDataView, GetScoreDataView, getMemberData, GetTotalScoresView, GetMerkelDataView, SetClaimTokensView, GetAllScoresWithTokenInfo
+from .views import SubmitScoreView, ScoreListView, ListAllScores, MerkelDataView, GetScoreDataView, getMemberData, GetTotalScoresView, GetMerkelDataView, SetClaimTokensView, GetAllScoresWithTokenInfo, CalculateOwnership
 
 urlpatterns = [
   path('submitScore/', SubmitScoreView.as_view(), name='submit-score'),
@@ -12,4 +12,5 @@ urlpatterns = [
   path('getTotalScores/', GetTotalScoresView.as_view(), name='total_scores'),
   path('getMerkelDataView/', GetMerkelDataView.as_view(), name='getMerkelDataView'),
   path('getAllScoresWithTokenInfo/', GetAllScoresWithTokenInfo.as_view(), name='all-scores'),
+  path('calculateOwnership/', CalculateOwnership.as_view(), name='calculateOwnership'),
 ]
