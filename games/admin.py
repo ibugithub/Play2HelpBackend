@@ -32,9 +32,13 @@ class MerkelDataStructureAdmin(admin.ModelAdmin):
     ordering = ('-created_at',)
     
 class BrandsAdmin(admin.ModelAdmin):
-    list_display = ('name', 'total_value', 'total_tokens', 'token_prices', 'token_count_date', 'token_duration', 'started_date', 'created_at', 'updated_at')
+    list_display = ('name', 'get_token_info', 'total_value', 'total_tokens', 'token_prices', 'token_count_date', 'token_duration', 'started_date', 'created_at', 'updated_at')
     search_fields = ('name',)
     ordering = ('-created_at',)
+
+    def get_token_info(self, obj):
+        return ", ".join([token_info.token_name for token_info in obj.tokenInfo.all()])
+    get_token_info.short_description = 'Token Info'
 
 class MembersAdmin(admin.ModelAdmin):
     list_display = ('name', 'user', 'get_brands', 'role', 'joined_date', 'earned_tokens', 'earned_dollars', 'ownership', 'created_at', 'updated_at') 
@@ -44,7 +48,7 @@ class MembersAdmin(admin.ModelAdmin):
 
     def get_brands(self, obj):
         return ", ".join([brand.name for brand in obj.brands.all()])
-    get_brands.short_description = 'Brands' 
+    get_brands.short_description = 'Brands'
 
 class TotalScoreAdmin(admin.ModelAdmin):
     list_display = ('user', 'total_score', 'total_tokens', 'created_at', 'updated_at')
