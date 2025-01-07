@@ -7,5 +7,6 @@ urlpatterns = [
     path('ads/categories/', get_categories, name='get_categories'),
     path('worlds/', WorldView.as_view(), name='worlds'),
     path('worlds/<str:world_name>/ads/', AdsForWorldView.as_view(), name='ads_for_world'),
-    path('worlds/<str:world_name>/ads/<int:ad_number>/', AdsPreview.as_view()),
+    path('worlds/<str:world_name>/ads/<int:index>/', AdsForWorldView.as_view()),
+    path('worlds/<str:world_name>/ads-prev/<int:ad_number>/', AdsPreview.as_view()),
 ]

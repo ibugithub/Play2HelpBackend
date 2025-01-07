@@ -42,7 +42,7 @@ class WorldView(APIView):
 
 # List of worlds
 class AdsForWorldView(APIView):
-    def get(self, request, world_name):
+    def get(self, request, world_name, index=None):
         try:
             # Fetch the world object
             world = World.objects.get(name=world_name)
@@ -50,42 +50,53 @@ class AdsForWorldView(APIView):
             # Get ads that match the categories of the world
             ads = Ad.objects.filter(category__in=world.ad_categories)
 
-            # Serialize the ads
-            serializer = AdSerializer(ads, many=True)
-
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        except World.DoesNotExist:
-            return Response({"error": f"World '{world_name}' does not exist."}, status=status.HTTP_404_NOT_FOUND)
-
-# Server-side ad preview
-class AdsPreview(APIView):
-    def get(self, request, world_name, ad_number=None):
-        try:
-            # Fetch the world object
-            world = get_object_or_404(World, name=world_name)
-
-            # Filter ads by the world's categories
-            ads = Ad.objects.filter(category__in=world.ad_categories)
-
-            if ad_number is None:
-                # Return the serialized list of ads for the world
+            # If an index is provided, fetch only the specific ad
+            if index is not None:
+                try:
+                    ad = ads[int(index)]  # Get the ad at the given index
+                    serializer = AdSerializer(ad)
+                    return Response(serializer.data, status=status.HTTP_200_OK)
+                except IndexError:
+                    return Response(
+                        {"error": f"No ad found at index {index}."},
+                        status=status.HTTP_404_NOT_FOUND,
+                    )
+            else:
+                # Serialize all ads if no index is provided
                 serializer = AdSerializer(ads, many=True)
                 return Response(serializer.data, status=status.HTTP_200_OK)
-
-            # Render a specific ad
-            try:
-                ad = ads[int(ad_number) - 1]  # Adjust for 0-based index
-            except IndexError:
-                return Response(
-                    {"error": f"No ad found for world '{world_name}' at position {ad_number}."},
-                    status=status.HTTP_404_NOT_FOUND,
-                )
-
-            # Render the template with the specific ad
-            return render(request, "ad-render.html", {"ad": ad, "world": world})
 
         except World.DoesNotExist:
             return Response(
                 {"error": f"World '{world_name}' does not exist."},
                 status=status.HTTP_404_NOT_FOUND,
             )
+
+
+# Server-side ad preview
+class AdsPreview(APIView):
+    def get(self, request, world_name, ad_number=None):
+        # Get the specified world or return a 404 error
+        world = get_object_or_404(World, name=world_name)
+
+        # Get ads that belong to the world's categories
+        ads = Ad.objects.filter(category__in=world.ad_categories).order_by('id')  # Order ads explicitly
+
+        if not ads.exists():
+            return Response(
+                {"error": f"No ads found for the world '{world_name}'."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Render a specific ad based on the ad_number
+        try:
+            ad_number = int(ad_number)  # Ensure ad_number is an integer
+            ad = ads[ad_number - 1]  # Adjust to 0-based index for the queryset
+        except (ValueError, IndexError):
+            return Response(
+                {"error": f"Invalid ad number '{ad_number}' for the world '{world_name}'."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Render the ad in the template
+        return render(request, "ad-render.html", {"ad": ad, "world": world})
