@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ ad.title }}</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f5f5f5;
+        color: #333;
+      }
+      .ad-container {
+        max-width: 800px;
+        margin: 20px auto;
+        background-color: #fff;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+      }
+      .ad-header {
+        padding: 16px;
+        border-bottom: 1px solid #ddd;
+      }
+      .ad-header h1 {
+        font-size: 24px;
+        margin: 0;
+      }
+      .ad-content {
+        display: flex;
+        flex-direction: row;
+        gap: 16px;
+        padding: 16px;
+      }
+      .ad-images {
+        flex: 1;
+      }
+      .ad-images img {
+        max-width: 100%;
+        border-radius: 8px;
+      }
+      .ad-details {
+        flex: 2;
+      }
+      .ad-details .price {
+        font-size: 20px;
+        color: #d9534f;
+        margin: 8px 0;
+      }
+      .ad-details .price-original {
+        font-size: 16px;
+        color: #999;
+        text-decoration: line-through;
+      }
+      .ad-details .rating {
+        margin: 8px 0;
+        color: #f39c12;
+      }
+      .ad-details .description {
+        margin: 16px 0;
+      }
+      .ad-footer {
+        padding: 16px;
+        background-color: #f9f9f9;
+        text-align: right;
+        border-top: 1px solid #ddd;
+      }
+      .ad-footer a {
+        text-decoration: none;
+        background-color: #007bff;
+        color: #fff;
+        padding: 8px 16px;
+        border-radius: 4px;
+        font-size: 16px;
+      }
+      .ad-footer a:hover {
+        background-color: #0056b3;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="ad-container">
+      <!-- Ad Header -->
+      <div class="ad-header">
+        <h1>{{ ad.title }}</h1>
+        <p><strong>Brand:</strong> {{ ad.brand }}</p>
+        <p><strong>Category:</strong> {{ ad.category }}</p>
+      </div>
+
+      <!-- Ad Content -->
+      <div class="ad-content">
+        <!-- Ad Images -->
+        <div class="ad-images">
+          {% if ad.image_urls %} {% for image_url in ad.image_urls %}
+          <img src="{{ image_url }}" alt="{{ ad.title }} image" />
+          {% endfor %} {% else %}
+          <p>No images available.</p>
+          {% endif %}
+        </div>
+
+        <!-- Ad Details -->
+        <div class="ad-details">
+          <div class="price">
+            {% if ad.price_discounted %}
+            <span>{{ ad.currency }} {{ ad.price_discounted }}</span>
+            <span class="price-original"
+              >{{ ad.currency }} {{ ad.price_original }}</span
+            >
+            {% else %}
+            <span>{{ ad.currency }} {{ ad.price_original }}</span>
+            {% endif %}
+          </div>
+          {% if ad.rating %}
+          <div class="rating">
+            ★ {{ ad.rating }}/5 ({{ ad.review_count}} reviews)
+          </div>
+          {% endif %} {% if ad.stock_status %}
+          <p style="color: green">In Stock</p>
+          {% else %}
+          <p style="color: red">Out of Stock</p>
+          {% endif %}
+          <p class="description">{{ ad.description }}</p>
+          {% if ad.delivery_time %}
+          <p><strong>Delivery Time:</strong> {{ ad.delivery_time }}</p>
+          {% endif %} {% if ad.shipping_cost %}
+          <p>
+            <strong>Shipping Cost:</strong>{{ad.currency}}{{ad.shipping_cost}}
+          </p>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Ad Footer -->
+      <div class="ad-footer">
+        <a href="{{ ad.affiliate_link }}" target="_blank">Buy Now</a>
+      </div>
+    </div>
+  </body>
+</html>
