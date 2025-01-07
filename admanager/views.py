@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import World
 from .serializers import WorldSerializer
+from django.shortcuts import render, get_object_or_404
 
 
 # List all ads or create a new one
@@ -55,3 +56,36 @@ class AdsForWorldView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         except World.DoesNotExist:
             return Response({"error": f"World '{world_name}' does not exist."}, status=status.HTTP_404_NOT_FOUND)
+
+# Server-side ad preview
+class AdsPreview(APIView):
+    def get(self, request, world_name, ad_number=None):
+        try:
+            # Fetch the world object
+            world = get_object_or_404(World, name=world_name)
+
+            # Filter ads by the world's categories
+            ads = Ad.objects.filter(category__in=world.ad_categories)
+
+            if ad_number is None:
+                # Return the serialized list of ads for the world
+                serializer = AdSerializer(ads, many=True)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+
+            # Render a specific ad
+            try:
+                ad = ads[int(ad_number) - 1]  # Adjust for 0-based index
+            except IndexError:
+                return Response(
+                    {"error": f"No ad found for world '{world_name}' at position {ad_number}."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            # Render the template with the specific ad
+            return render(request, "ad-render.html", {"ad": ad, "world": world})
+
+        except World.DoesNotExist:
+            return Response(
+                {"error": f"World '{world_name}' does not exist."},
+                status=status.HTTP_404_NOT_FOUND,
+            )

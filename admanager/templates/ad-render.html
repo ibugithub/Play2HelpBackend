@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ ad.title }}</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f9f9f9;
+        color: #333;
+        margin: 0;
+        padding: 20px;
+      }
+      .ad-container {
+        max-width: 700px;
+        margin: auto;
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+      .ad-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+      .ad-header img {
+        max-width: 120px;
+        margin-right: 20px;
+        border-radius: 8px;
+      }
+      .ad-header h1 {
+        font-size: 24px;
+        color: #222;
+      }
+      .ad-details {
+        margin: 20px 0;
+      }
+      .ad-details p {
+        margin-bottom: 10px;
+        color: #555;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="ad-container">
+      <div class="ad-header">
+        <img src="{{ ad.image.url }}" alt="{{ ad.title }}" />
+        <h1>{{ ad.title }}</h1>
+      </div>
+      <div class="ad-details">
+        <p><strong>Brand:</strong> {{ ad.brand }}</p>
+        <p><strong>Category:</strong> {{ ad.category }}</p>
+        <p><strong>Description:</strong> {{ ad.description }}</p>
+        <p><strong>Price:</strong> ${{ ad.price }}</p>
+      </div>
+      <a
+        href="{{ ad.link }}"
+        style="
+          display: inline-block;
+          padding: 10px 20px;
+          background: #007bff;
+          color: white;
+          text-decoration: none;
+          border-radius: 6px;
+        "
+        >Buy Now</a
+      >
+    </div>
+  </body>
+</html>
