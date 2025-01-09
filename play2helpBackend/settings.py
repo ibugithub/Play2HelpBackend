@@ -47,7 +47,10 @@ INSTALLED_APPS = [
     'corsheaders',
     'users',
     'games',
+    'worlds',
+    'tokens',
     'admanager',
+    'members'
 ]
 
 MIDDLEWARE = [

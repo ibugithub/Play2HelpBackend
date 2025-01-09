@@ -21,5 +21,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/users/', include('users.urls')),
     path('api/games/', include('games.urls')),
+    path('api/members/', include('members.urls')),
+    path('api/tokens/', include('tokens.urls')),
+    path('api/worlds/', include('worlds.urls')),
     path('api/admanager/', include('admanager.urls')),
 ]
