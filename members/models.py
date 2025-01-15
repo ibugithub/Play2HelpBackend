@@ -3,7 +3,6 @@ from django.contrib.auth import get_user_model
 from worlds.models import Brand
 User = get_user_model()
 
-
 class Members(models.Model):
   ROLE_CHOICES = [
     ('super_founder', 'Super Founder'),
@@ -27,3 +26,12 @@ class Members(models.Model):
 
   def __str__(self):
       return f"{self.name}: {self.role}"
+
+class MonthlyAllocation(models.Model):
+  member = models.ForeignKey(Members, on_delete=models.CASCADE)
+  month = models.DateField()
+  tokenAllocation = models.FloatField(default=0.0)
+  created_at = models.DateTimeField(auto_now_add=True)
+  updated_at = models.DateTimeField(auto_now=True)
+  def __str__(self):
+      return f"{self.member.name}: {self.month}"

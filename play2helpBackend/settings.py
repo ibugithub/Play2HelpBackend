@@ -95,20 +95,15 @@ WSGI_APPLICATION = 'play2helpBackend.wsgi.application'
 #     }
 # }
 
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.environ.get("DB_NAME"),
-        'USER': os.environ.get("DB_USER"),
-        'PASSWORD': os.environ.get("DB_PASSWORD"),
-        'HOST': os.environ.get("DB_HOST"),
-        'PORT': '3306',
-    }
+    'default': {}
 }
 
+dbUrl = os.environ.get("db_url")
+DATABASES['default'] = dj_database_url.parse(dbUrl, conn_max_age=600, ssl_require=True)
 
-# dbUrl = os.environ.get("db_url")
-# DATABASES['default'] = dj_database_url.parse(dbUrl, conn_max_age=600, ssl_require=True)
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
