@@ -4,7 +4,7 @@ from django.db import models
 class TokenInfo(models.Model):
   token_name = models.CharField(max_length=100)
   token_symbol = models.CharField(max_length=100, null=True, blank=True)
-  solana_contract_address = models.CharField(max_length=700, null=True)
+  solana_contract_address = models.CharField(max_length=700, null=True, blank=True)
   bnb_contract_address = models.CharField(max_length=700, null=True, blank=True)
   total_value = models.FloatField(default=0, null=True, blank=True)
   total_tokens = models.FloatField(default=0, null=True, blank=True)

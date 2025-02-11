@@ -32,8 +32,11 @@ class SubmitScoreView(APIView):
         except ValueError:
             return Response({'error': 'Tokens must be an integer.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        if not game or int(score) < 0:
-            return Response({'error': 'Game and score are required fields.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not gameName or int(score) < 0:
+            return Response({'error': 'Game is a required field.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if not game:
+            return Response({'error': 'Game not found in the db.'}, status=status.HTTP_404_NOT_FOUND)
 
         try:
             score = int(score) 
