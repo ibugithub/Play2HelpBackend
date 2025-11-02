@@ -1,5 +1,32 @@
-Play2HelpBackendEnv
+# Minimal Django .gitignore — essentials only
+
+# preserve user's environment and deployment files
+Play2HelpBackendEnv/
 .env
 app.yaml
+/myenv/
 
-/myenv
+# Python bytecode
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Local SQLite DB used in development
+db.sqlite3
+
+# Django collected static (optional to keep out of repo)
+staticfiles/
+
+# IDE/editor
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# End
