@@ -86,22 +86,13 @@ WSGI_APPLICATION = 'play2helpBackend.wsgi.application'
 
 
 # Database
-# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
-
-
 DATABASES = {
     'default': {}
 }
 
 dbUrl = os.environ.get("db_url")
-DATABASES['default'] = dj_database_url.parse(dbUrl, conn_max_age=600, ssl_require=True)
+DATABASES['default'] = dj_database_url.parse(dbUrl)
+
 
 
 
@@ -155,7 +146,7 @@ REST_FRAMEWORK = {
     ),
 }
 
-CORS_ALLOWED_ORIGINS = os.environ.get("CORS_ALLOWED_ORIGINS").split(" ")
+CORS_ALLOWED_ORIGINS = os.environ.get("FRONTEND_BASE_URL").split(" ")
 CORS_ALLOW_CREDENTIALS = True
 accessTokenTime = int(os.environ.get("ACCESS_TOKEN_TIME"))
 refreshTokenTime = int(os.environ.get("REFRESH_TOKEN_TIME"))
