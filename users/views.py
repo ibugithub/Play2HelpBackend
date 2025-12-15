@@ -18,6 +18,8 @@ from games.serializers import ScoreSerializer
 from users.utils.sendEmail import send_email;
 from rest_framework.permissions import IsAuthenticated
 
+
+
 class CreateUser(APIView):
   def post(self, request):
     serializer = UserSerializer(data=request.data)
@@ -25,7 +27,7 @@ class CreateUser(APIView):
       serializer.save()
       user = serializer.instance
       verification_token = RefreshToken.for_user(user).access_token
-      verification_url = f"{os.environ.get('FRONTEND_BASE_URL')}/accounts/verifyEmail?token={verification_token}"
+      verification_url = f"{request.headers.get('Origin')}/accounts/verifyEmail?token={verification_token}"
       send_email(
         subject="Verify your email",
         recipient_list=[user.email],
@@ -108,12 +110,16 @@ def handleThrdProvUser(request, user):
 @api_view(['POST'])
 def GetGoogleUserInfo(request):
   code = request.data.get('code')
+  
+  print('the cross origin domain is', request.headers.get('Origin'))
+  print('the referrer is', request.headers.get('Referer'))
+  
   if not code:
     return Response({'error': 'Authorization code is required'}, status=status.HTTP_400_BAD_REQUEST)
   try:
     client_id = os.environ.get('GOOGLE_CLIENT_ID')
     client_secret = os.environ.get('GOOGLE_CLIENT_SECRET')
-    redirect_uri = f"{os.environ.get('FRONTEND_BASE_URL')}/{os.environ.get('GOOGLE_REDIRECT_URI')}"
+    redirect_uri = f"{request.headers.get('Origin')}/{os.environ.get('GOOGLE_REDIRECT_URI')}"
     token_response = requests.post(
       f"https://oauth2.googleapis.com/token",
       data={
@@ -163,7 +169,7 @@ def GetFBUserInfo(request):
   try:
     app_id = os.environ.get('FACEBOOK_APP_ID')
     app_secret = os.environ.get('FACEBOOK_APP_SECRET')
-    redirect_uri = f"{os.environ.get('FRONTEND_BASE_URL')}/accounts/fbCallback"
+    redirect_uri = f"{request.headers.get('Origin')}/accounts/fbCallback"
 
     # Exchange authorization code for access token
     token_response = requests.get(
@@ -194,7 +200,7 @@ def GetMsUserInfo(request):
   try:
     client_id = os.environ.get('MICROSOFT_CLIENT_ID')
     client_secret = os.environ.get('MICROSOFT_CLIENT_SECRET')
-    redirect_uri = f"{os.environ.get('FRONTEND_BASE_URL')}/{os.environ.get('MICROSOFT_REDIRECT_URI')}"
+    redirect_uri = f"{request.headers.get('Origin')}/{os.environ.get('MICROSOFT_REDIRECT_URI')}"
     
     token_url = "https://login.microsoftonline.com/common/oauth2/v2.0/token"
     token_data = {
@@ -283,7 +289,7 @@ def reSendVerificationEmail(request):
       return Response({"message": "Email is already verified"}, status=status.HTTP_200_OK)
     
     verification_token = RefreshToken.for_user(user).access_token
-    verification_url = f"{os.environ.get('FRONTEND_BASE_URL')}/accounts/verifyEmail?token={verification_token}"
+    verification_url = f"{request.headers.get('Origin')}/accounts/verifyEmail?token={verification_token}"
     send_email(
       subject="Verify your email",
       recipient_list=[user.email],
@@ -304,7 +310,7 @@ def forgetPassword(request):
   try:
     user = User.objects.get(email=email)
     reset_token = RefreshToken.for_user(user).access_token
-    reset_url = f"{os.environ.get('FRONTEND_BASE_URL')}/accounts/resetPassword?token={reset_token}"
+    reset_url = f"{request.headers.get('Origin')}/accounts/resetPassword?token={reset_token}"
     send_email(
       subject="Reset your password",
       recipient_list=[user.email],

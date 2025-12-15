@@ -146,7 +146,7 @@ REST_FRAMEWORK = {
     ),
 }
 
-CORS_ALLOWED_ORIGINS = os.environ.get("FRONTEND_BASE_URL").split(" ")
+CORS_ALLOWED_ORIGINS = os.environ.get("ALLOWED_FRONTEND").split(" ")
 CORS_ALLOW_CREDENTIALS = True
 accessTokenTime = int(os.environ.get("ACCESS_TOKEN_TIME"))
 refreshTokenTime = int(os.environ.get("REFRESH_TOKEN_TIME"))
