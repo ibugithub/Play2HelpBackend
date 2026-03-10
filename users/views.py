@@ -112,8 +112,7 @@ def GetGoogleUserInfo(request):
   code = request.data.get('code')
   
   print('the cross origin domain is', request.headers.get('Origin'))
-  print('the referrer is', request.headers.get('Referer'))
-  
+
   if not code:
     return Response({'error': 'Authorization code is required'}, status=status.HTTP_400_BAD_REQUEST)
   try:
