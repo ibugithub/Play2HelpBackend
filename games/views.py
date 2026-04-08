@@ -3,6 +3,9 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from django.contrib.auth import get_user_model
+from django.db.models import Count, Sum
+from django.db.models.functions import Coalesce
 
 from members.models import Members
 from members.serializers import MemberSerializer
@@ -12,6 +15,7 @@ from tokens.serializers import TokenInfoSerializer
 from .models import FrontendSite, Game, Score, TotalScore
 from .serializers import ScoreSerializer, TotalScoreSerializer
 
+User = get_user_model()
 
 FRONTEND_SITE_ALIASES = {
     "weplah2help": FrontendSite.WEPLAY2HELP,
@@ -22,11 +26,51 @@ FRONTEND_SITE_ALIASES = {
     "weplay2work": FrontendSite.WEPLAY2WORK,
 }
 
+TRACKED_FRONTEND_SITES = [
+    FrontendSite.WEPLAY2HELP,
+    FrontendSite.WEPLAY2HEALTH,
+    FrontendSite.WEPLAY2LEARN,
+    FrontendSite.WEPLAY2LOVE,
+    FrontendSite.WEPLAY2WORK,
+]
+
+FRONTEND_SITE_LABELS = {
+    choice: label
+    for choice, label in FrontendSite.choices
+}
+
 
 def normalize_frontend_site(value):
     if value is None:
         return FrontendSite.UNKNOWN
     return FRONTEND_SITE_ALIASES.get(str(value).strip().lower())
+
+
+def build_leaderboard(queryset, limit=10):
+    leaderboard_rows = (
+        queryset
+        .values("user", "user__name")
+        .annotate(
+            total_score=Coalesce(Sum("score"), 0),
+            total_tokens=Coalesce(Sum("tokens"), 0.0),
+            games_played=Count("game", distinct=True),
+            site_count=Count("source_site", distinct=True),
+        )
+        .order_by("-total_score", "user__name")[:limit]
+    )
+
+    leaderboard = []
+    for index, row in enumerate(leaderboard_rows, start=1):
+        leaderboard.append({
+            "rank": index,
+            "user_id": row["user"],
+            "user_name": row["user__name"],
+            "total_score": row["total_score"],
+            "total_tokens": round(float(row["total_tokens"]), 4),
+            "games_played": row["games_played"],
+            "site_count": row["site_count"],
+        })
+    return leaderboard
 
 
 class SubmitScoreView(APIView):
@@ -234,3 +278,64 @@ class GetAllScoresWithTokenInfo(APIView):
         except Exception as e:
             print("An error occurred:", str(e))
             return Response({"error": "An error occurred while retrieving scores."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class GetWorldStatsView(APIView):
+    def get(self, request):
+        try:
+            all_scores = Score.objects.exclude(source_site=FrontendSite.UNKNOWN)
+            registered_users_total = User.objects.count()
+            active_users_total = all_scores.values("user").distinct().count()
+            total_score_entries = all_scores.count()
+            total_games = Game.objects.count()
+
+            master_leaderboard = build_leaderboard(all_scores)
+            per_site_leaderboards = {}
+            site_user_counts = []
+
+            for site_key in TRACKED_FRONTEND_SITES:
+                site_scores = all_scores.filter(source_site=site_key)
+                site_leaderboard = build_leaderboard(site_scores, limit=10)
+                site_total_score = site_scores.aggregate(
+                    total=Coalesce(Sum("score"), 0)
+                )["total"]
+                site_user_count = site_scores.values("user").distinct().count()
+                site_score_entries = site_scores.count()
+
+                per_site_leaderboards[site_key] = {
+                    "site": site_key,
+                    "label": FRONTEND_SITE_LABELS.get(site_key, site_key),
+                    "entries": site_leaderboard,
+                }
+
+                site_user_counts.append({
+                    "site": site_key,
+                    "label": FRONTEND_SITE_LABELS.get(site_key, site_key),
+                    "active_users": site_user_count,
+                    "score_entries": site_score_entries,
+                    "total_score": site_total_score,
+                })
+
+            return Response(
+                {
+                    "summary": {
+                        "registered_users_total": registered_users_total,
+                        "active_users_total": active_users_total,
+                        "tracked_sites_count": len(TRACKED_FRONTEND_SITES),
+                        "total_score_entries": total_score_entries,
+                        "total_games": total_games,
+                    },
+                    "user_counts": {
+                        "all_sites_total": registered_users_total,
+                        "active_players_total": active_users_total,
+                        "sites": site_user_counts,
+                    },
+                    "leaderboards": {
+                        "master": master_leaderboard,
+                        "sites": per_site_leaderboards,
+                    },
+                },
+                status=status.HTTP_200_OK,
+            )
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
