@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import SubmitScoreView, ScoreListView, ListAllScores, GetScoreDataView, GetTotalScoresView, SetClaimTokensView, GetAllScoresWithTokenInfo
+from .views import SubmitScoreView, ScoreListView, ListAllScores, GetScoreDataView, GetTotalScoresView, SetClaimTokensView, GetAllScoresWithTokenInfo, GetWorldStatsView
 
 urlpatterns = [
   path('submitScore/', SubmitScoreView.as_view(), name='submit-score'),
@@ -8,5 +8,6 @@ urlpatterns = [
   path('setClaimTokens/', SetClaimTokensView.as_view(), name='claim_tokens'),
   path('getScoreData/', GetScoreDataView.as_view(), name='score_data'),
   path('getTotalScores/', GetTotalScoresView.as_view(), name='total_scores'),
-  path('getAllScoresWithTokenInfo/', GetAllScoresWithTokenInfo.as_view(), name='all-scores')
+  path('getAllScoresWithTokenInfo/', GetAllScoresWithTokenInfo.as_view(), name='all-scores'),
+  path('getWorldStats/', GetWorldStatsView.as_view(), name='world-stats'),
 ]
