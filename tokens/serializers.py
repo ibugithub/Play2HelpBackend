@@ -13,3 +13,10 @@ class MerkelDatastructureSerializer(serializers.ModelSerializer):
         fields = ['id', 'serialized_leaves', 'modified_date', 'created_at', 'updated_at']
         read_only_fields = ['created_at', 'updated_at']
         
+
+class TokenInfoWithBnBSeriaizer(serializers.ModelSerializer):
+    class Meta:
+        model = TokenInfo
+        fields = ['bnb_contract_address']
+        read_only_fields = ['created_at', 'updated_at']
+        

@@ -3,8 +3,8 @@ from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.response import Response
-from .models import MerkelDatastructure
-
+from .models import MerkelDatastructure, TokenInfo
+from .serializers import TokenInfoSerializer, TokenInfoWithBnBSeriaizer
 
 class MerkelDataView(APIView):
     def post(self, request):
@@ -44,4 +44,20 @@ class GetMerkelDataView(APIView):
             return Response(
                 {"error": f"An error occurred: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+class GetTokenInfoView(APIView):
+    def get(self, request):
+        """Get all BNB contract addresses."""
+        try:
+            token_info = TokenInfo.objects.values_list("bnb_contract_address", flat=True)
+            if not token_info.exists():
+                return Response(
+                    {"error": "No data found."}, status=status.HTTP_404_NOT_FOUND
+                )
+            return Response(list(token_info), status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(
+                {"error": f"An error occurred: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
