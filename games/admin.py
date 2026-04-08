@@ -7,9 +7,9 @@ class GameAdmin(admin.ModelAdmin):
     ordering = ('-created_at',)
 
 class ScoreAdmin(admin.ModelAdmin):
-    list_display = ('user', 'game', 'score', 'tokens', 'claimed_tokens', 'last_claimed_date', 'created_at', 'updated_at')
-    list_filter = ('user', 'created_at')
-    search_fields = ('user__email', 'score', 'tokens')
+    list_display = ('user', 'game', 'source_site', 'score', 'tokens', 'claimed_tokens', 'last_claimed_date', 'created_at', 'updated_at')
+    list_filter = ('user', 'game', 'source_site', 'created_at')
+    search_fields = ('user__email', 'user__name', 'game__name', 'source_site', 'score', 'tokens')
     ordering = ('-created_at',)
 
 class TotalScoreAdmin(admin.ModelAdmin):
